@@ -1,0 +1,299 @@
+# Basic Server Setup (Heroku) {#heroku}
+
+[Heroku](https://www.heroku.com/) is a commercial cloud hosting
+provider. If you are not experienced with web server administration,
+Heroku may be the simplest option for you.
+
+The Heroku free plan is sufficient for small-scale testing of your app,
+but once you are ready to launch a study, you should upgrade to a paid
+server, which can handle more traffic. However, Heroku is quite
+inexpensive, because you only pay for the time you actually use it. If
+you run a study for only 1 day, you can turn off your dynos and addons,
+and then you only pay 1/30 of the monthly cost. Often this means you can
+run a study for just a few dollars.
+
+## Heroku setup (Option 1)
+
+New as of November 2018: I have built a web dashboard called [oTree
+Hub](https://www.otreehub.com/) that automates your Heroku setup and
+allows you to skip all the below steps.
+
+Note: although it is easier than the manual steps below, oTree Hub is a
+beta service and may end or change at some point.
+
+## Heroku setup (Option 2)
+
+### Create an account
+
+Create an account on [Heroku](https://www.heroku.com/). Select Python as
+your main language. However, you can skip the \"Getting Started With
+Python\" guide.
+
+### Install the Heroku Toolbelt
+
+Install the [Heroku Toolbelt](https://toolbelt.heroku.com/).
+
+This provides you access to the Heroku Command Line utility.
+
+Once installed open your command prompt/terminal, and `cd` to your
+project folder.
+
+Log in using the email address and password you used when creating your
+Heroku account:
+
+``` bash
+$ heroku login
+```
+
+If the `heroku` command is not found, close and reopen your command
+prompt.
+
+### Initialize your Git repo
+
+Run this command from your project\'s root folder:
+
+``` bash
+git init
+```
+
+If you\'re on Windows, you may need to install Git from
+[here](https://git-scm.com/download/win).
+
+### Create the Heroku app
+
+``` bash
+$ heroku create my-app-name
+```
+
+This will create your website `my-app-name.herokuapp.com`.
+
+### Install Redis add-on {#redis}
+
+> heroku addons:create heroku-<redis:premium-0>
+
+### Upgrade oTree
+
+Upgrade oTree, to get the latest bugfixes:
+
+``` bash
+$ pip3 install -U otree
+```
+
+### Save to requirements_base.txt {#requirements_base.txt}
+
+Run:
+
+    otree --version
+
+The version that is output will look something like `X.X.X`. Open
+`requirements_base.txt` in your project\'s root folder and replace
+whatever is in that file with this single line:
+
+    otree>=X.X.X
+
+This tells Heroku which version of otree to use.
+
+::: note
+::: title
+Note
+:::
+
+Change as of December 2017: if your `requirements_base.txt` contains
+`Django==1.8.8`, you should delete that line.
+
+Also, otree-core has been renamed to otree, as described in
+`v20`{.interpreted-text role="ref"}, so you should replace `otree-core`
+by `otree`.
+:::
+
+If your code uses any extra Python packages (e.g. Numpy or Pandas), they
+need to be added to your `requirements_base.txt` also.
+
+### Push your code to Heroku
+
+Commit your changes (note the dot in `git add .`):
+
+``` bash
+git add .
+git commit -am "your commit message"
+```
+
+(If it\'s your first time with Git, you may be prompted to run some git
+config commands before you can commit.)
+
+Transfer (push) the local repository to Heroku:
+
+``` bash
+git push heroku master
+```
+
+Reset the oTree database on Heroku.
+
+``` bash
+heroku run "otree resetdb"
+```
+
+(You can run `heroku run "otree resetdb --noinput"` if you want to skip
+the prompt.)
+
+Open the site in your browser:
+
+``` bash
+heroku open
+```
+
+(This command must be executed from the folder that contains your
+project.)
+
+### Troubleshooting {#heroku-troubleshooting}
+
+If your app fails to load, e.g. \"application error\", try the
+following:
+
+-   Use the command `heroku logs` to check the server logs for any error
+    messages (or, better yet, enable
+    `Papertrail <papertrail>`{.interpreted-text role="ref"}, which
+    provides a nice UI for browsing logs).
+-   Make sure you remembered to enable the Heroku Redis add-on (see
+    `here <redis>`{.interpreted-text role="ref"}).
+-   Run `heroku run "otree --version"` to check that you are using the
+    latest version of otree on Heroku.
+
+### Making updates and modifications
+
+When you make modifications to your app and want to push the updates to
+Heroku, enter:
+
+    git add .
+    git commit -am "my commit message"
+    git push heroku master
+    # next command only required if you added/removed a field in models.py
+    heroku run "otree resetdb"
+
+You should also regularly update your
+`requirements_base.txt <requirements_base.txt>`{.interpreted-text
+role="ref"}.
+
+## Further steps with Heroku
+
+Below are the steps you should take before launching a real study, or to
+further configure your server\'s behavior.
+
+### Turn on timeout worker Dyno
+
+To enable full functionality, you should go to the [Heroku
+Dashboard](https://dashboard.heroku.com/apps), click on your app, click
+to edit the dynos, and turn on the second dyno (named `worker` or
+`timeoutworker`).
+
+If you are just testing your app, oTree will still function without the
+timeoutworker, but if you are running a study with real participants and
+your pages have timeouts defined by `timeout_seconds`, then the
+timeoutworker will ensure that the user will be automatically advanced
+to the next page even if they closes their browser. This can be useful
+for online experiments with groups.
+
+### To add an existing remote:
+
+If you previously created a Heroku app and want to link your local oTree
+git repository to that app, use this command:
+
+``` bash
+$ heroku git:remote -a [myherokuapp]
+```
+
+You can get your app\'s name by typing `heroku apps`.
+
+### Scaling up the server
+
+The Heroku free plan is sufficient for small-scale testing of your app,
+but once you are ready to go live, you need to upgrade to a paid plan.
+
+After you finish your experiment, you can scale your dynos and database
+back down, so then you don\'t have to pay the full monthly cost.
+
+#### Postgres (upgrade required)
+
+You need to upgrade your Postgres database to a paid tier (at least the
+cheapest paid plan), because the free version can only store a small
+amount of data.
+
+To provision the \"Hobby Basic\" database:
+
+    $ heroku addons:create heroku-postgresql:hobby-basic
+    Adding heroku-postgresql:hobby-basic to sushi... done, v69
+    Attached as HEROKU_POSTGRESQL_RED
+    Database has been created and is available
+
+This command will give you the name of your new DB (in the above
+example, `HEROKU_POSTGRESQL_RED`). Then you need to promote (i.e.
+\"activate\") this new database:
+
+    $ heroku pg:promote HEROKU_POSTGRESQL_RED  # substitute your color here
+    Promoting HEROKU_POSTGRESQL_RED_URL to DATABASE_URL... done
+
+After purchasing the upgraded Postgres, it\'s recommended to delete the
+hobby-dev (free) database, to avoid accidentally using the wrong
+database.
+
+#### Upgrade dynos
+
+In the Heroku dashboard, click on your app\'s \"Resources\" tab, and in
+the \"dynos\" section, select \"Upgrade to Hobby\". Then select either
+\"Hobby\" or \"Professional\".
+
+You can also increase the number of web dynos, but if you do so, you may
+need to upgrade your Redis plan also, because more dynos means more
+Redis connections.
+
+You should not increase the number of worker dynos.
+
+##### Upgrade Redis
+
+If running a study, you should upgrade to one of the paid Redis plans,
+because it allows more connections and gives you more memory, which can
+prevent the following errors:
+
+-   \"ConnectionError: max number of clients reached\"
+-   \"ResponseError: OOM command not allowed when used memory \>
+    \'maxmemory\'.\"
+
+### Setting environment variables
+
+If you would like to turn off debug mode, you should set the
+`OTREE_PRODUCTION` environment variable, like this:
+
+``` bash
+$ heroku config:set OTREE_PRODUCTION=1
+```
+
+However, this will hide error pages, so you should set up
+`sentry`{.interpreted-text role="ref"}.
+
+To password protect parts of the admin interface, you should set
+`OTREE_AUTH_LEVEL`):
+
+``` bash
+$ heroku config:set OTREE_AUTH_LEVEL=DEMO
+```
+
+## Logging with Papertrail {#papertrail}
+
+If using Heroku, we recommend installing the free \"Papertrail\" logging
+add-on:
+
+    heroku addons:create papertrail:choklad
+
+Papertrail gives you an easy-to-use interface for exploring the Heroku
+server logs. It is much easier to use than running `heroku logs`.
+
+## Database backups
+
+When running studies, it is your responsibility to back up your
+database. In Heroku, you can set backups for your Postgres database
+through the Heroku dashboard.
+
+## Next steps
+
+See `server_final_steps`{.interpreted-text role="ref"} for steps you
+should take before launching your study.
