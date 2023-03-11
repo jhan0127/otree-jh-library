@@ -124,7 +124,7 @@ config commands before you can commit.)
 Transfer (push) the local repository to Heroku:
 
 ``` bash
-git push heroku master
+git push heroku master or main
 ```
 
 Reset the oTree database on Heroku.
