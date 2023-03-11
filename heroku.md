@@ -124,7 +124,7 @@ config commands before you can commit.)
 Transfer (push) the local repository to Heroku:
 
 ``` bash
-git push heroku master or main
+git push heroku master
 ```
 
 Reset the oTree database on Heroku.
@@ -166,7 +166,7 @@ Heroku, enter:
 
     git add .
     git commit -am "my commit message"
-    git push heroku master
+    git push heroku master (or git push heroku main)
     # next command only required if you added/removed a field in models.py
     heroku run "otree resetdb"
 
